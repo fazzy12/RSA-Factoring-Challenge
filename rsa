@@ -1,33 +1,44 @@
-#!/usr/bin/python3
+#!/usr/bin/env bash
 
-# library to get arguments
-import sys
+# Function to check if a number is prime
+is_prime() {
+    local num=$1
+    if ((num < 2)); then
+        return 1
+    fi
 
+    for ((i = 2; i <= num / 2; i++)); do
+        if ((num % i == 0)); then
+            return 1
+        fi
+    done
 
-# fn unpack number factorial
-def fc():
-    """
-    function fc to search file to convert number and format n=p*q
-    """
-    try:
-        revfile = sys.argv[1]
-        with open(revfile) as f:
-            for revnumber in f:
-                revnumber = int(revnumber)
-                if revnumber % 2 == 0:
-                        print("{}={}*{}".format(revnumber, revnumber // 2, 2))
-                        continue
-                i = 3
-                while i < revnumber // 2:
-                    if revnumber % i == 0:
-                        print("{}={}*{}".format(revnumber, revnumber // i, i))
-                        break
-                    i = i + 2
-                if i == (revnumber // 2) + 1:
-                    print("{}={}*{}".format(revnumber, revnumber, 1))
-    except (IndexError):
-        pass
+    return 0
+}
 
+# Function to factorize the RSA number into two prime numbers
+factor_rsa() {
+    local n=$1
+    local p=2
+    while true; do
+        if ((n % p == 0)); then
+            local q=$((n / p))
+            if is_prime "$q"; then
+                echo "$n=$p*$q"
+                return
+            fi
+        fi
+        p=$((p + 1))
+    done
+}
 
-# autostart
-fc()
+# Check if the correct number of command line arguments is provided
+if [ $# -ne 1 ]; then
+    echo 'Usage: rsa <file>'
+    exit 1
+else
+    # Read RSA numbers from the input file
+    while read -r num; do
+        factor_rsa "$num"
+    done < "$1"  # Read from the input file specified on the command line
+fi
