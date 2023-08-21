@@ -18,7 +18,8 @@ check_factor() {
     num1=$2
     num=$(echo "$1" | tr ':' '=')
 
-    if ((num2 > num1)); then
+    # Compare num2 and num1 numerically
+    if [ "$num2" -gt "$num1" ]; then
         numcp=$num1
         num1=$num2
         num2=$numcp
