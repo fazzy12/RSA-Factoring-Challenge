@@ -1,29 +1,47 @@
 #!/usr/bin/env bash
+check_factor()
+{
+    if [ $# -ne 3 ];
+        then
+                args=("$@")
+                count=0
+                num2=1
+                for a in ${args[*]};
+                do
+                        if [ $count -gt 1 ];
+                        then
+                                num2=$(echo $a*$num2 | bc)
+                        fi
+                        count=$((count + 1))
+                done
+        else
+                num2=$3
+        fi
 
-# Function to factorize a number into two smaller numbers
-check_factor() {
-    local num1=$1   # The original number
-    local num2=$2   # The first factor
+        num1=$2
+        num=$(echo "$1" | tr ':' '=')
 
-    # Ensure num1 is greater than or equal to num2
-    if ((num1 < num2)); then
-        local temp=$num1
-        num1=$num2
-        num2=$temp
-    fi
+        result=$(echo "if($num2 > $num1) 1 else 0" | bc)
+            if ((result == 1)); then
+                numcp=$num1
+                num1=$num2
+                num2=$numcp
+                fi
 
-    # Output the factorization in the desired format
-    echo "$num1=$num2*$((num1 / num2))"
+        echo "$num$num1*$num2"
 }
 
-# Check if the correct number of command line arguments is provided
-if [ $# -ne 1 ]; then
-    echo 'Usage: factors <file>'
-    exit 1
+if [ $# -ne 1 ]
+then
+        echo 'Usage: factors <file>'
+        exit 1
 else
-    # Read numbers from the input file
-    while read -r num; do
-        # Get the first factor using the "factor" command and pipe to "awk" to extract the second column
-        check_factor "$num" "$(factor "$num" | awk '{print $2}')"
-    done < "$1"  # Read from the input file specified on the command line
+
+        while read i
+        do
+
+                result=$(factor "$i")
+                check_factor $result
+
+        done < "$1"
 fi
