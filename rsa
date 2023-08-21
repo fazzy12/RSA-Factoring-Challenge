@@ -1,44 +1,59 @@
 #!/usr/bin/env bash
 
-# Function to check if a number is prime
-is_prime() {
-    local num=$1
-    if ((num < 2)); then
-        return 1
-    fi
+# Function to find the greatest common divisor of two numbers
+gcd() {
+    local a=$1
+    local b=$2
+    while [ "$b" -ne 0 ]; do
+        local t=$b
+        b=$((a % b))
+        a=$t
+    done
+    echo "$a"
+}
 
-    for ((i = 2; i <= num / 2; i++)); do
-        if ((num % i == 0)); then
-            return 1
-        fi
+# Pollard's Rho algorithm to find a non-trivial factor
+pollards_rho() {
+    local n=$1
+    local x=2
+    local y=2
+    local d=1
+
+    while [ "$d" -eq 1 ]; do
+        x=$(( (x*x + 1) % n ))
+        y=$(( (y*y + 1) % n ))
+        y=$(( (y*y + 1) % n ))
+        d=$(gcd "$n" "$((x > y ? x - y : y - x))")
     done
 
-    return 0
+    echo "$d"
 }
 
 # Function to factorize the RSA number into two prime numbers
 factor_rsa() {
     local n=$1
-    local p=2
-    while true; do
-        if ((n % p == 0)); then
-            local q=$((n / p))
-            if is_prime "$q"; then
-                echo "$n=$p*$q"
-                return
-            fi
-        fi
-        p=$((p + 1))
-    done
+    local factor=$(pollards_rho "$n")
+    local q=$((n / factor))
+    echo "$n=$factor*$q"
 }
 
 # Check if the correct number of command line arguments is provided
-if [ $# -ne 1 ]; then
-    echo 'Usage: rsa <file>'
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    echo 'Usage: rsa <input_file> [output_file]'
     exit 1
 else
+    input_file=$1
+    output_file=$2
+
+    # Set the output stream to either the specified output file or standard output
+    if [ -n "$output_file" ]; then
+        exec 3>"$output_file"
+    else
+        exec 3>&1  # Standard output
+    fi
+
     # Read RSA numbers from the input file
     while read -r num; do
-        factor_rsa "$num"
-    done < "$1"  # Read from the input file specified on the command line
+        factor_rsa "$num" >&3  # Print to the selected output stream
+    done < "$input_file"
 fi
